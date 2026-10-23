@@ -55,6 +55,7 @@ public class UsersApp {
        try (PrintWriter writer = new PrintWriter("out.txt")) {
             for (User user : users) {
                 writer.println(user.getName() + " " + user.getPassword());
+                writer.println(user.getName() + " " + user.getPassword());
             }
         }
     }
