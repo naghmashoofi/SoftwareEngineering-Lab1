@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -9,14 +10,20 @@ public class GcmApp extends Application {
     @Override
     public void start(Stage stage) throws Exception {
 
-        Parent root = FXMLLoader.load(
+        // Load valid users before opening the login screen.
+        ArrayList<User> users = UsersApp.loadUsers("Users.txt");
+
+        FXMLLoader loader = new FXMLLoader(
             getClass().getResource("/Login.fxml")
         );
+        Parent root = loader.load();
 
-        Scene scene = new Scene(root);
+        // Pass the users to the controller created by the FXML loader.
+        LoginController controller = loader.getController();
+        controller.setUsers(users);
 
         stage.setTitle("GCM Login");
-        stage.setScene(scene);
+        stage.setScene(new Scene(root));
         stage.show();
     }
 
