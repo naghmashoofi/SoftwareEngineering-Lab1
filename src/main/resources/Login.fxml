@@ -46,7 +46,7 @@
             <Label layoutX="290.0" layoutY="28.0" text="GCM Login" />
             <Label layoutX="52.0" layoutY="77.0" text="Username" />
             <Label layoutX="52.0" layoutY="191.0" text="Password" />
-            <Label fx:id="errorLabel" layoutX="52.0" layoutY="143.0" prefHeight="18.0" prefWidth="192.0" text="User or password do not  match" visible="false" />
+            <Label fx:id="errorLabel" layoutX="52.0" layoutY="140.0" prefHeight="45.0" prefWidth="536.0" wrapText="true" style="-fx-text-fill: red;" visible="false" AnchorPane.leftAnchor="52.0" AnchorPane.rightAnchor="52.0" />
             <TextField fx:id="usernameField" layoutX="52.0" layoutY="104.0" />
             <Button fx:id="loginButton" layoutX="265.0" layoutY="276.0" mnemonicParsing="false" onAction="#handleLogin" prefHeight="35.0" prefWidth="110.0" text="Login" />
             <PasswordField fx:id="passwordField" layoutX="52.0" layoutY="217.0" />

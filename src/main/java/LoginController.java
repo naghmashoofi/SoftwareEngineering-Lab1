@@ -1,5 +1,7 @@
 import java.io.IOException;
 import java.util.ArrayList;
+
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -12,6 +14,7 @@ import javafx.stage.Stage;
 public class LoginController {
 
     private ArrayList<User> users = new ArrayList<>();
+    private boolean loginInProgress = false;
 
     @FXML
     private TextField usernameField;
@@ -22,38 +25,95 @@ public class LoginController {
     @FXML
     private Label errorLabel;
 
-    /**
-     * Receives the valid users loaded at startup.
-     */
     public void setUsers(ArrayList<User> users) {
         this.users = users;
     }
 
-    /**
-     * Checks both credentials against the loaded users.
-     * Displays an error within the login screen if no match exists.
-     */
     @FXML
     private void handleLogin() {
+        if (loginInProgress) {
+            return;
+        }
+
         String username = usernameField.getText();
         String password = passwordField.getText();
 
         for (User user : users) {
-            if (user.getName().equals(username)
-                    && user.getPassword().equals(password)) {
-                showWelcome();
+            if (user.getName().equals(username)) {
+                loginInProgress = true;
+                errorLabel.setVisible(false);
+
+                if (user.getPassword().equals(password)) {
+                    checkAccess(user);
+                } else {
+                    recordFailure(user);
+                }
+
                 return;
             }
         }
 
-        errorLabel.setText("Invalid username or password.");
+        showError("Invalid username or password.");
+    }
+
+    private void checkAccess(User user) {
+        Thread thread = new Thread(() -> {
+            boolean blocked = user.isBlocked(GcmApp.getBlockSeconds());
+
+            Platform.runLater(() -> {
+                try {
+                    if (blocked) {
+                        showBlockedMessage();
+                    } else {
+                        showWelcome();
+                    }
+                } finally {
+                    loginInProgress = false;
+                }
+            });
+        }, "LoginBlockCheck");
+
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private void recordFailure(User user) {
+        Thread thread = new Thread(() -> {
+            boolean blocked = user.registerFailedAttempt(
+                GcmApp.getMaxAttempts(),
+                GcmApp.getBlockSeconds()
+            );
+
+            Platform.runLater(() -> {
+                try {
+                    if (blocked) {
+                        showBlockedMessage();
+                    } else {
+                        showError("Invalid username or password.");
+                    }
+                } finally {
+                    loginInProgress = false;
+                }
+            });
+        }, "FailedAttemptUpdate");
+
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private void showBlockedMessage() {
+        showError(
+            "This account is blocked for "
+            + GcmApp.getBlockSeconds()
+            + " seconds from the last allowed failed attempt."
+        );
+    }
+
+    private void showError(String message) {
+        errorLabel.setText(message);
         errorLabel.setVisible(true);
     }
 
-    /**
-     * Replaces the login screen with the Welcome screen
-     * in the same window.
-     */
     private void showWelcome() {
         try {
             Parent root = FXMLLoader.load(
@@ -65,8 +125,7 @@ public class LoginController {
             stage.setTitle("GCM Welcome");
 
         } catch (IOException e) {
-            errorLabel.setText("Unable to open Welcome screen.");
-            errorLabel.setVisible(true);
+            showError("Unable to open Welcome screen.");
             e.printStackTrace();
         }
     }
